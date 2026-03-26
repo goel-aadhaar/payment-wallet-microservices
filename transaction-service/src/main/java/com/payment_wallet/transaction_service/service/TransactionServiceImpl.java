@@ -47,7 +47,7 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             String eventPayload = objectMapper.writeValueAsString(saved);
             String key = String.valueOf(saved.getId());
-            kafkaEventProducer.sendTransactionEvent(key, eventPayload);
+            kafkaEventProducer.sendTransactionEvent(key, saved);
             System.out.println("Kafka message sent");
         } catch (Exception e) {
             System.err.println("Faied to send kafka event");

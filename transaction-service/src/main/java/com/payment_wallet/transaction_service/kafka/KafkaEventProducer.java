@@ -19,14 +19,14 @@ public class KafkaEventProducer {
 
     private static final String TOPIC = "txn-initiated";
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, Transaction> kafkaTemplate;
 
     private final ObjectMapper objectMapper;
 
-    public void sendTransactionEvent(String key, String message) {
-        System.out.println("Sending to kafka -> Topic: " + TOPIC + "Key: " + key + ", message: " + message);
+    public void sendTransactionEvent(String key, Transaction transaction) {
+        System.out.println("Sending to kafka -> Topic: " + TOPIC + "Key: " + key + ", transaction: " + transaction);
 
-        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(TOPIC, key, message);
+        CompletableFuture<SendResult<String, Transaction>> future = kafkaTemplate.send(TOPIC, key, transaction);
 
         future.thenAccept(result -> {
             RecordMetadata metadata = result.getRecordMetadata();
@@ -35,13 +35,5 @@ public class KafkaEventProducer {
             System.err.println("Failed to send kafka message: " + ex.getMessage());
             return null;
         });
-    }
-
-    public void sendTransactionEvent(String key, Transaction transaction) {
-        try {
-            String message = objectMapper.writeValueAsString(transaction);
-        } catch (JsonProcessingException e) {
-            System.err.println("Error serializing transaction: " + e.getMessage());
-        }
     }
 }
