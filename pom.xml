@@ -4,7 +4,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- ✅ SAME as your new pom -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -21,6 +20,7 @@
         <module>user-service</module>
         <module>transaction-service</module>
         <module>notification-service</module>
+        <module>reward-service</module>
     </modules>
 
     <properties>
