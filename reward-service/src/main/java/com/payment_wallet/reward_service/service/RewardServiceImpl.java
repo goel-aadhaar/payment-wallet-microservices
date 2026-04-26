@@ -10,7 +10,11 @@ import java.util.List;
 @Service
 public class RewardServiceImpl implements RewardService {
 
-    private RewardRepository rewardRepository;
+    private final RewardRepository rewardRepository;
+
+    public RewardServiceImpl(RewardRepository rewardRepository) {
+        this.rewardRepository = rewardRepository;
+    }
 
     @Override
     public Reward sendReward(Reward reward) {
@@ -21,5 +25,10 @@ public class RewardServiceImpl implements RewardService {
     @Override
     public List<Reward> getRewardByUserId(Long userId) {
         return rewardRepository.findByUserId(userId);
+    }
+
+    @Override
+    public List<Reward> getAllRewards() {
+        return rewardRepository.findAll();
     }
 }

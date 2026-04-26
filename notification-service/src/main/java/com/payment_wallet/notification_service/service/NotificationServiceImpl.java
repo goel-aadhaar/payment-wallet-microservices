@@ -2,17 +2,19 @@ package com.payment_wallet.notification_service.service;
 
 import com.payment_wallet.notification_service.entity.Notification;
 import com.payment_wallet.notification_service.repository.NotificationRepository;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@AllArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+
+    public NotificationServiceImpl(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
 
     @Override
     public Notification sendNotification(Notification notification) {
@@ -21,7 +23,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public List<Notification> getNotificationsByUserId(String userId) {
+    public List<Notification> getNotificationsByUserId(Long userId) {
         return notificationRepository.findByUserId(userId);
     }
 }

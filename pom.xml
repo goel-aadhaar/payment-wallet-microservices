@@ -7,59 +7,31 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.4</version>
+        <version>4.0.6</version>
         <relativePath/>
     </parent>
 
-    <groupId>com.payment_walletl</groupId>
+    <groupId>com.payment_wallet</groupId>
     <artifactId>payment-wallet</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
         <module>user-service</module>
+        <module>wallet-service</module>
         <module>transaction-service</module>
         <module>notification-service</module>
         <module>reward-service</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
         <java.version>25</java.version>
+        <lombok.version>1.18.36</lombok.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-
-            <!-- Lombok (same as new setup) -->
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <optional>true</optional>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>
-
-            <!-- Compiler plugin (inherits version from Spring Boot parent) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-
-                    <!-- Lombok support -->
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
 
             <!-- Spring Boot plugin -->
             <plugin>
@@ -71,3 +43,4 @@
     </build>
 
 </project>
+

@@ -2,20 +2,23 @@ package com.payment_wallet.user_service.controller;
 
 import com.payment_wallet.user_service.entity.User;
 import com.payment_wallet.user_service.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.apache.catalina.connector.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
-    @PostMapping()
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -23,7 +26,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUSerById(@PathVariable Long id) {
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService
                 .getUserById(id)
                 .map(ResponseEntity::ok)
@@ -31,9 +34,7 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<User> getAllUser() {
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body((User) userService.getAllUsers());
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 }

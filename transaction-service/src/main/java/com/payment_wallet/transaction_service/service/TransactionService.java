@@ -1,12 +1,12 @@
 package com.payment_wallet.transaction_service.service;
 
+import com.payment_wallet.transaction_service.dto.TransactionRequest;
 import com.payment_wallet.transaction_service.entity.Transaction;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 public interface TransactionService {
-    Transaction createTransaction(Transaction transaction);
+    Transaction createTransaction(TransactionRequest request);
 
     List<Transaction> getAllTransactions();
 }

@@ -1,50 +1,39 @@
 package com.payment_wallet.user_service.util;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
 
-@RequiredArgsConstructor
 @Component
 public class JwtUtil {
 
     private static final String SECRET = "secret123secret123secret123secret123secret123secret123";
+    private static final long EXPIRATION_MS = 86400000; // 24 hours
 
-    private Key getSigninKey() {
+    private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String extractEmail(String token) {
+    public String extractUsername(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigninKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody()
+                .parseSignedClaims(token)
+                .getPayload()
                 .getSubject();
     }
 
     public boolean validateToken(String token, String username) {
         try {
-            extractEmail(token);
-            return true;
+            String extractedUsername = extractUsername(token);
+            return extractedUsername.equals(username);
         } catch (Exception e) {
             return false;
         }
-    }
-
-    public String extractUsername(String token) {
-        return Jwts.parser()
-                .setSigningKey(getSigninKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
     }
 
     public String generateToken(Map<String, Object> claims, String email) {
@@ -52,17 +41,17 @@ public class JwtUtil {
                 .claims(claims)
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 86400000))
-                .signWith(getSigninKey(), SignatureAlgorithm.HS256)
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public String extractRole(String token) {
         return (String) Jwts.parser()
-                .setSigningKey(getSigninKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody()
+                .parseSignedClaims(token)
+                .getPayload()
                 .get("role");
     }
 }

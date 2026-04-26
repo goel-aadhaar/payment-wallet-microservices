@@ -1,37 +1,39 @@
 package com.payment_wallet.notification_service.kafka;
 
+import com.payment_wallet.notification_service.dto.TransactionEvent;
 import com.payment_wallet.notification_service.entity.Notification;
-import com.payment_wallet.notification_service.entity.Transaction;
 import com.payment_wallet.notification_service.repository.NotificationRepository;
-import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 
 @Component
-@AllArgsConstructor
 public class NotificationConsumer {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationConsumer.class);
 
     private final NotificationRepository notificationRepository;
 
-    private final ObjectMapper mapper;
+    public NotificationConsumer(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
 
     @KafkaListener(topics = "txn-initiated", groupId = "notification-group")
-    public void consumeTransaction(Transaction transaction) {
-        Transaction txn = mapper.readValue(message, Transaction.class);
-        Long receiverUserId = txn.getReceiverId();
-        Long senderUserId = txn.getSenderId();
+    public void consumeTransaction(TransactionEvent transaction) {
 
-        String notify = "$ " + txn.getAmount() + "received from " + txn.getSenderId();
+        String notify = "$ " + transaction.getAmount() + " received from user " + transaction.getSenderId();
 
-        Notification notification = Notification
-                .builder()
+        Notification notification = Notification.builder()
+                .userId(transaction.getReceiverId())
                 .message(notify)
                 .sentAt(LocalDateTime.now())
                 .build();
 
         notificationRepository.save(notification);
+
+        log.info("Notification saved for userId: {}, message: {}", transaction.getReceiverId(), notify);
     }
 }

@@ -5,10 +5,8 @@ import com.payment_wallet.user_service.dto.LoginRequest;
 import com.payment_wallet.user_service.dto.SignupRequest;
 import com.payment_wallet.user_service.entity.User;
 import com.payment_wallet.user_service.repository.UserRepository;
+import com.payment_wallet.user_service.service.UserService;
 import com.payment_wallet.user_service.util.JwtUtil;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,9 +21,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
-@Data
-@Builder
-@RequiredArgsConstructor
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -33,6 +28,15 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     private final JwtUtil jwtUtil;
+
+    private final UserService userService;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserService userService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.userService = userService;
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
@@ -50,32 +54,31 @@ public class AuthController {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userService.createUser(user);
 
-        return ResponseEntity.ok("User registered successfully");
+        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
 
-        if(userOpt.isEmpty()) {
-            return ResponseEntity.status(401).body("User not found");
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
         }
 
         User user = userOpt.get();
 
-        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(401).body("Invalid Credentials");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Credentials");
         }
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole());
+        claims.put("userId", user.getId());
 
         String token = jwtUtil.generateToken(claims, user.getEmail());
 
-        return ResponseEntity.status(HttpStatus.OK).body(new JwtResponse(token));
+        return ResponseEntity.ok(new JwtResponse(token));
     }
-
-
 }
