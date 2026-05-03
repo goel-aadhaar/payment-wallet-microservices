@@ -2,6 +2,7 @@ package com.payment_wallet.user_service.util;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -11,16 +12,19 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET = "secret123secret123secret123secret123secret123secret123";
-    private static final long EXPIRATION_MS = 86400000; // 24 hours
+    private final SecretKey signingKey;
+    private final long expirationMs;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration-ms:86400000}") long expirationMs) {
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expirationMs = expirationMs;
     }
 
     public String extractUsername(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -41,14 +45,14 @@ public class JwtUtil {
                 .claims(claims)
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
-                .signWith(getSigningKey())
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(signingKey)
                 .compact();
     }
 
     public String extractRole(String token) {
         return (String) Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()

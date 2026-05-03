@@ -3,10 +3,6 @@ package com.payment_wallet.notification_service.dto;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO representing a transaction event received from Kafka.
- * This is NOT a JPA entity — it's a lightweight data carrier for Kafka deserialization.
- */
 public class TransactionEvent {
 
     private Long id;

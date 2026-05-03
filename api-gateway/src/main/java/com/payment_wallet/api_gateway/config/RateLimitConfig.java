@@ -1,7 +1,6 @@
 package com.payment_wallet.api_gateway.config;
 
 import org.springframework.cloud.gateway.server.mvc.filter.Bucket4jFilterFunctions;
-import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.HandlerFilterFunction;

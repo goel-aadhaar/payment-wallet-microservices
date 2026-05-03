@@ -22,6 +22,12 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
             "/auth/login"
     );
 
+    private final JwtUtil jwtUtil;
+
+    public JwtAuthFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @Override
     public ServerResponse filter(ServerRequest request, HandlerFunction<ServerResponse> next) throws Exception {
 
@@ -40,7 +46,7 @@ public class JwtAuthFilter implements HandlerFilterFunction<ServerResponse, Serv
         try {
             String token = authHeader.substring(7);
 
-            Claims claims = JwtUtil.validateToken(token);
+            Claims claims = jwtUtil.validateToken(token);
 
             request.attributes().put("X-User-Email", claims.getSubject());
             request.attributes().put("X-User-Id", claims.get("userId"));

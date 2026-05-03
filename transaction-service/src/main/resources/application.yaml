@@ -5,6 +5,10 @@ spring:
   application:
     name: transaction-service
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -26,3 +30,6 @@ spring:
       ddl-auto: update
     show-sql: true
 
+wallet:
+  service:
+    url: http://localhost:8083/api/v1/wallets
