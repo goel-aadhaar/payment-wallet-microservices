@@ -1,9 +1,13 @@
 package com.payment_wallet.wallet_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class HoldRequest {
+    @Schema(description = "ID of the user whose funds to hold", example = "1")
     private Long userId;
+    @Schema(description = "Amount to place on hold", example = "200")
     private Long amount;
+    @Schema(description = "Currency of the amount", example = "INR")
     private String currency;
     public HoldRequest() {}
 

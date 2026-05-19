@@ -19,11 +19,134 @@ services:
         condition: service_healthy
     ports:
       - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: paymentwallet-user-service:latest
+    command: ["java", "-jar", "/app/user-service.jar"]
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - WALLET_SERVICE_URL=http://wallet-service:8088
+      - LOGGING_FILE_NAME=/app/logs/user-service.log
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - kafka
+      - wallet-service
+
+  wallet-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: paymentwallet-wallet-service:latest
+    command: ["java", "-jar", "/app/wallet-service.jar"]
+    ports:
+      - "8088:8088"
+    environment:
+      - SERVER_PORT=8088
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - LOGGING_FILE_NAME=/app/logs/wallet-service.log
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - kafka
+
+  transaction-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: paymentwallet-transaction-service:latest
+    command: ["java", "-jar", "/app/transaction-service.jar"]
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_PORT=8082
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - LOGGING_FILE_NAME=/app/logs/transaction-service.log
+      - WALLET_SERVICE_URL=http://wallet-service:8088/api/v1/wallets
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - kafka
+      - wallet-service
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: paymentwallet-notification-service:latest
+    command: ["java", "-jar", "/app/notification-service.jar"]
+    ports:
+      - "8083:8083"
+    environment:
+      - SERVER_PORT=8083
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - LOGGING_FILE_NAME=/app/logs/notification-service.log
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - kafka
+
+  reward-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: paymentwallet-reward-service:latest
+    command: ["java", "-jar", "/app/reward-service.jar"]
+    ports:
+      - "8084:8084"
+    environment:
+      - SERVER_PORT=8084
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - LOGGING_FILE_NAME=/app/logs/reward-service.log
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - kafka
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: paymentwallet-api-gateway:latest
+    command: ["java", "-jar", "/app/api-gateway.jar"]
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - USER_SERVICE_URL=http://user-service:8081
+      - WALLET_SERVICE_URL=http://wallet-service:8088
+      - TRANSACTION_SERVICE_URL=http://transaction-service:8082
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8083
+      - REWARD_SERVICE_URL=http://reward-service:8084
+      - LOGGING_FILE_NAME=/app/logs/api-gateway.log
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - user-service
+      - wallet-service
+      - transaction-service
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - api-gateway

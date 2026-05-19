@@ -3,19 +3,24 @@ package com.payment_wallet.notification_service.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Entity
 @Table(name = "notifications")
 public class Notification {
 
+    @Schema(description = "Unique notification identifier", example = "200")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(description = "ID of the user receiving the notification", example = "1")
     private Long userId;
 
+    @Schema(description = "Notification message content", example = "Transaction of 150.0 INR successful.")
     private String message;
 
+    @Schema(description = "Time the notification was sent", example = "2026-05-03T12:00:01")
     private LocalDateTime sentAt;
     public Notification() {}
 

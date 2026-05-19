@@ -4,50 +4,6 @@ server:
 spring:
   application:
     name: api-gateway
-  cloud:
-    gateway:
-      routes:
-        - id: user-service
-          uri: ${routes.user-service.url}
-          predicates:
-            - Path=/auth/**
-
-        - id: user-api
-          uri: ${routes.user-service.url}
-          predicates:
-            - Path=/api/users/**
-
-        - id: wallet-service
-          uri: ${routes.wallet-service.url}
-          predicates:
-            - Path=/api/v1/wallets/**
-
-        - id: transaction-service
-          uri: ${routes.transaction-service.url}
-          predicates:
-            - Path=/api/transactions/**
-
-        - id: reward-service
-          uri: ${routes.reward-service.url}
-          predicates:
-            - Path=/api/rewards/**
-
-        - id: notification-service
-          uri: ${routes.notification-service.url}
-          predicates:
-            - Path=/api/notifications/**
-
-routes:
-  user-service:
-    url: http://localhost:8081
-  wallet-service:
-    url: http://localhost:8083
-  transaction-service:
-    url: http://localhost:8082
-  reward-service:
-    url: http://localhost:8085
-  notification-service:
-    url: http://localhost:8084
 
 jwt:
   secret: secret123secret123secret123secret123secret123secret123

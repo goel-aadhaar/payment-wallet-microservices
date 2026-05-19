@@ -4,28 +4,35 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Entity
 @Table(name = "transaction")
 public class Transaction {
 
+    @Schema(description = "Unique transaction identifier", example = "500")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(description = "ID of the user sending the money", example = "1")
     @Column(name = "sender_id", nullable = false)
     private Long senderId;
 
+    @Schema(description = "ID of the user receiving the money", example = "2")
     @Column(name = "receiver_id", nullable = false)
     private Long receiverId;
 
+    @Schema(description = "Transfer amount in INR", example = "150.0")
     @Column(nullable = false)
     @Positive(message = "Amount must be positive")
     private Double amount;
 
+    @Schema(description = "Time the transaction was initiated", example = "2026-05-03T12:00:00")
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    @Schema(description = "Current status of the transaction", example = "SUCCESS")
     @Column(nullable = false)
     private String status;
 

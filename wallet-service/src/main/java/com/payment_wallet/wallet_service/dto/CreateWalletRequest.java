@@ -1,8 +1,11 @@
 package com.payment_wallet.wallet_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class CreateWalletRequest {
+    @Schema(description = "ID of the user to create the wallet for", example = "1")
     private Long userId;
+    @Schema(description = "Currency for the wallet", example = "INR")
     private String currency;
     public CreateWalletRequest() {}
 

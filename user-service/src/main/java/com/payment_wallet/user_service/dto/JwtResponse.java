@@ -1,8 +1,10 @@
 package com.payment_wallet.user_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class JwtResponse {
 
+    @Schema(description = "JWT Bearer token for authentication", example = "eyJhbGciOiJIUzUxMiJ9...")
     private String token;
     public JwtResponse() {}
 

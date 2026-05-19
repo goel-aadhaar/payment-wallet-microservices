@@ -15,7 +15,7 @@ public class WalletClient {
 
     private final RestClient restClient;
 
-    public WalletClient(@Value("${wallet.service.url:http://localhost:8083}") String walletServiceUrl) {
+    public WalletClient(@Value("${wallet.service.url:${WALLET_SERVICE_URL:http://localhost:8088}}") String walletServiceUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(walletServiceUrl)
                 .build();

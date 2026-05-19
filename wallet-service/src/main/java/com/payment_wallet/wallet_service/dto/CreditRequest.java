@@ -1,9 +1,13 @@
 package com.payment_wallet.wallet_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class CreditRequest {
+    @Schema(description = "ID of the user whose wallet to credit", example = "1")
     private Long userId;
+    @Schema(description = "Amount to credit", example = "1000")
     private Long amount;
+    @Schema(description = "Currency of the amount", example = "INR")
     private String currency;
     public CreditRequest() {}
 

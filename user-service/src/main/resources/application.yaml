@@ -23,3 +23,7 @@ spring:
 jwt:
   secret: secret123secret123secret123secret123secret123secret123
   expiration-ms: 86400000
+
+wallet:
+  service:
+    url: ${WALLET_SERVICE_URL:http://localhost:8088}

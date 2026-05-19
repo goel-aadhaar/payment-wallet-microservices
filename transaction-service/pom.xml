@@ -11,14 +11,13 @@
 	<name>transaction-service</name>
 	<description>Transaction Service for Payment Wallet</description>
 
-    <!-- ✅ Spring Cloud BOM -->
+    <!-- Spring Cloud BOM (2025.1.x is compatible with Spring Boot 4.0.x) -->
     <dependencyManagement>
         <dependencies>
-            <!-- Source: https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-dependencies -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>2025.0.2</version>
+                <version>2025.1.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -26,6 +25,12 @@
     </dependencyManagement>
 
 	<dependencies>
+		<!-- Feign Client -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+
 		<!-- Validation -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -65,6 +70,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.0.3</version>
+		</dependency>
+
 		<!-- Test -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -76,12 +87,6 @@
 			<artifactId>spring-kafka-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
-        <!-- Feign Client-->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
 
     </dependencies>
 

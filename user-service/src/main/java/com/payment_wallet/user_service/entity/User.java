@@ -1,23 +1,30 @@
 package com.payment_wallet.user_service.entity;
 
 import jakarta.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Entity
 @Table(name = "users")
 public class User {
+    @Schema(description = "Unique user identifier", example = "1")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(description = "User's first name", example = "John")
     private String firstName;
 
+    @Schema(description = "User's last name", example = "Doe")
     private String lastName;
 
+    @Schema(description = "User's email address", example = "john.doe@example.com")
     @Column(unique = true)
     private String email;
 
+    @Schema(description = "User's encrypted password (hidden in responses)", example = "********")
     private String password;
 
+    @Schema(description = "User's assigned role", example = "ROLE_USER")
     private String role;
     public User() {}
 

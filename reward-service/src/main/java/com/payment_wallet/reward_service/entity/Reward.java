@@ -3,20 +3,26 @@ package com.payment_wallet.reward_service.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Entity
 @Table(name = "rewards")
 public class Reward {
+    @Schema(description = "Unique reward identifier", example = "300")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(description = "ID of the user receiving the reward", example = "1")
     private Long userId;
 
+    @Schema(description = "Amount of reward points/cashback", example = "5.0")
     private Double points;
 
+    @Schema(description = "Time the reward was granted", example = "2026-05-03T12:00:02")
     private LocalDateTime sentAt;
 
+    @Schema(description = "ID of the transaction that triggered this reward", example = "500")
     @Column(unique = true)
     private Long transactionId;
     public Reward() {}

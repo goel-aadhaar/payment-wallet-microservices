@@ -1,0 +1,33 @@
+# Build Stage
+FROM eclipse-temurin:25-jdk-alpine AS builder
+
+RUN apk add --no-cache maven
+WORKDIR /app
+
+# Copy the parent pom and all source code
+COPY . .
+
+# Build the entire multi-module project at once
+RUN mvn clean package -DskipTests
+
+# Run Stage
+FROM eclipse-temurin:25-jre-alpine
+
+WORKDIR /app
+
+# Create a non-root user for security
+RUN addgroup -S spring && adduser -S spring -G spring
+
+# Copy all built jars from the builder stage
+# We copy them into the root of /app/
+COPY --from=builder /app/user-service/target/*.jar /app/user-service.jar
+COPY --from=builder /app/wallet-service/target/*.jar /app/wallet-service.jar
+COPY --from=builder /app/transaction-service/target/*.jar /app/transaction-service.jar
+COPY --from=builder /app/notification-service/target/*.jar /app/notification-service.jar
+COPY --from=builder /app/reward-service/target/*.jar /app/reward-service.jar
+COPY --from=builder /app/api-gateway/target/*.jar /app/api-gateway.jar
+
+USER spring:spring
+
+# The docker-compose command will override this to run the specific service
+CMD ["sh", "-c", "echo 'Please specify a service to run via command' && exit 1"]

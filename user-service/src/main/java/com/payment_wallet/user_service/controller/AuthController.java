@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,7 @@ public class AuthController {
         this.userService = userService;
     }
 
+    @Operation(summary = "Sign Up", description = "Create a new user account")
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
 
@@ -54,11 +56,12 @@ public class AuthController {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
 
-        User savedUser = userService.createUser(user);
+        userService.createUser(user);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
+    @Operation(summary = "Login", description = "Authenticate and get a JWT token")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());

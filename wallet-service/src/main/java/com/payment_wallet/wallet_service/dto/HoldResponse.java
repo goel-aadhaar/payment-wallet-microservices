@@ -1,9 +1,13 @@
 package com.payment_wallet.wallet_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class HoldResponse {
+    @Schema(description = "Reference ID of the placed hold", example = "HOLD-8f3b-4c2a-9e1d")
     private String holdReference;
+    @Schema(description = "Amount held", example = "200")
     private Long amount;
+    @Schema(description = "Status of the hold", example = "PLACED")
     private String status;
     public HoldResponse() {}
 

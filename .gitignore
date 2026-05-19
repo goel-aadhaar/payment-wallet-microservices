@@ -1,1 +1,35 @@
+# --- IDE / Editor ---
 .idea
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Java / Maven ---
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.log
+hs_err_pid*
+
+# --- Spring Boot H2 / runtime ---
+*.db
+*.mv.db
+*.trace.db
+
+# --- Runtime logs ---
+logs/
+
+# --- Node / Next.js (frontend has its own .gitignore too) ---
+node_modules/
+.next/
+out/
+build/
+
+# --- Env files ---
+.env
+.env.local
+.env*.local

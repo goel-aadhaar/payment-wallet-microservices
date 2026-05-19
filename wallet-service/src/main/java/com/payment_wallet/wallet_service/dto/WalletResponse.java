@@ -1,11 +1,17 @@
 package com.payment_wallet.wallet_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class WalletResponse {
+    @Schema(description = "Wallet unique identifier", example = "100")
     private Long id;
+    @Schema(description = "ID of the user owning the wallet", example = "1")
     private Long userId;
+    @Schema(description = "Currency for the wallet", example = "INR")
     private String currency;
+    @Schema(description = "Total balance including held funds", example = "5000")
     private Long balance;
+    @Schema(description = "Available balance for transactions", example = "4800")
     private Long availableBalance;
     public WalletResponse() {}
 

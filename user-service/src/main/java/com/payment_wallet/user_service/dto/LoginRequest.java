@@ -1,10 +1,13 @@
 package com.payment_wallet.user_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class LoginRequest {
 
+    @Schema(description = "Registered email address", example = "john.doe@example.com")
     private String email;
 
+    @Schema(description = "User's password", example = "securepassword123")
     private String password;
     public LoginRequest() {}
 
