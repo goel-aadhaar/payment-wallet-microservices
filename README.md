@@ -1,147 +1,106 @@
 # Payment Wallet Application
 
-A complete, production-grade Payment Wallet platform built with a **Spring Boot 4 / Java 25 Microservices Backend** and a **Next.js 15 / Tailwind CSS v4 Frontend**.
+A production-grade Payment Wallet platform: a **Spring Boot 4 / Java 25 microservices backend**
+(PostgreSQL, Kafka, JWT) behind a central API gateway, with a **Next.js / Tailwind CSS frontend**.
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture
 
-The system is composed of several independent microservices communicating through a centralized API Gateway.
+A shared **`common`** library (auto-configured into every service) provides cross-cutting concerns:
+RFC-7807 `ProblemDetail` error handling, a request correlation-id filter, a `PageResponse` envelope,
+and the shared `JwtUtil`.
 
-### Backend Services
-- **API Gateway (`port 8080`)**: Central entry point. Handles routing, JWT authentication, and rate limiting (via Bucket4j).
-- **User Service (`port 8081`)**: Manages user registration, login, and profile data. Issues JWT tokens.
-- **Wallet Service (`port 8088`)**: Core financial engine. Handles balance, credits, debits, and temporary fund holds for safe transactions.
-- **Transaction Service (`port 8082`)**: Processes money transfers between users by coordinating with the Wallet Service.
-- **Notification Service (`port 8083`)**: Stores and delivers alerts (e.g., successful transfers).
-- **Reward Service (`port 8084`)**: Calculates and distributes cashback/points based on transaction activity.
+| Service | Port | Responsibility | DB |
+|---|---|---|---|
+| **api-gateway** | 8080 | Routing, JWT validation, CORS, rate limiting (Bucket4j) | — |
+| **user-service** | 8081 | Registration, login (issues JWT), profile, change-password | `userdb` |
+| **wallet-service** | 8088 | Balances, credit/debit, holds (hold → capture/release), statement | `walletdb` |
+| **transaction-service** | 8082 | Transfers (coordinates wallet via resilient Feign), history/search | `transactiondb` |
+| **notification-service** | 8083 | Read/unread notifications from transaction events (Kafka consumer) | `notificationdb` |
+| **reward-service** | 8084 | Cashback points + loyalty tier from transaction events (Kafka consumer) | `rewarddb` |
+| **frontend** | 3000 | Next.js dashboard, transactions, rewards | — |
 
-### Frontend Application
-- **Next.js App Router**: Located in the `/frontend` directory. Provides a modern, responsive UI with a dashboard, transaction history, and rewards tracker.
+**Flow:** a transfer holds funds on the sender, verifies the receiver, captures (debits sender) and
+credits the receiver, then publishes a `txn-initiated` Kafka event. Reward and notification services
+consume it (idempotently) to award points and notify both parties.
 
 ## 🛠️ Tech Stack
 
-**Backend:**
-- **Language**: Java 25
-- **Framework**: Spring Boot 4.0.6
-- **Database**: H2 In-Memory Database (per service)
-- **Security**: JWT (JSON Web Tokens)
-- **API Docs**: Springdoc OpenAPI v3
-- **Rate Limiting**: Bucket4j
+**Backend:** Java 25 · Spring Boot 4.0.6 · **PostgreSQL + Flyway** migrations · Spring Data JPA ·
+Spring Kafka (with dead-letter topics) · **Resilience4j** (circuit breaker / timeouts) on inter-service
+calls · **Actuator + Micrometer/Prometheus** · JWT · Springdoc OpenAPI · JUnit 5 + Mockito.
 
-**Frontend:**
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **Icons**: Lucide React
-- **HTTP Client**: Axios
+**Frontend:** Next.js (App Router) · TypeScript · Tailwind CSS v4 · Axios.
 
 ---
 
-## 🚀 How to Run the Application
+## 🚀 Running locally
 
 ### Prerequisites
-- **Java 25** (Ensure `JAVA_HOME` is set correctly)
-- **Maven** (3.8+)
-- **Node.js** (18+)
-- **npm** (9+)
-- **Docker & Docker Compose** (Optional, but recommended)
+- **Docker Desktop** (runs PostgreSQL + Kafka), **JDK 25**, **Node.js 22+**.
 
-### 🐳 Running with Docker Compose (Recommended)
+### Option A — `run-local.ps1` (Windows/PowerShell, recommended for dev)
+Runs PostgreSQL + Kafka in Docker and the services/frontend natively on the host:
 
-The easiest way to run the entire stack (all microservices, frontend, Kafka, and Zookeeper) is via Docker Compose.
+```powershell
+.\run-local.ps1                 # build, start infra + all 6 services + frontend
+.\run-local.ps1 -SkipBuild      # reuse existing jars
+.\run-local.ps1 -SkipFrontend   # backend only (lighter on RAM)
+.\stop-local.ps1                # stop everything (Postgres data is preserved)
+```
 
-1. Ensure **Docker Desktop** is running on your machine.
-2. Open a terminal in the project root and run:
-   ```bash
-   docker-compose build
-   docker-compose up -d
-   ```
-*(Note: The first build will take a few minutes as Maven downloads dependencies inside the Docker image.)*
+> Each service JVM is capped (`-Xmx384m`) and started staggered, because Spring Boot otherwise
+> defaults max heap to ~25% of RAM and 6 simultaneous JVMs can exhaust memory on small machines.
 
-Once running, access the frontend at **http://localhost:3000** and the API Gateway at **http://localhost:8080**.
+### Option B — Docker Compose (fully containerized)
+```bash
+docker compose build
+docker compose up -d
+```
+Frontend → http://localhost:3000 · API Gateway → http://localhost:8080.
+(Containers emit **structured JSON logs** via `LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs`.)
+
+Configuration is via environment variables — see [`.env.example`](.env.example).
 
 ---
 
-### 💻 Running Manually (Without Docker)
+## 📡 Key API endpoints (via the gateway, `:8080`)
 
-### 1. Starting the Backend Microservices
+**Auth / users**
+- `POST /auth/signup`, `POST /auth/login`, `POST /auth/change-password`
+- `GET /api/v1/users/{id}`, `PUT /api/v1/users/{id}` (profile)
 
-You need to start the API Gateway and the required microservices. Open a terminal for each service, navigate to the project root, and use the Maven Spring Boot plugin.
+**Wallet**
+- `GET /api/v1/wallets/user/{userId}`, `POST /api/v1/wallets/credit`
+- `GET /api/v1/wallets/user/{userId}/transactions` (paginated statement)
 
-*Alternatively, you can import the parent `pom.xml` into your IDE (IntelliJ/Eclipse) and run the main application classes directly.*
+**Transactions**
+- `POST /api/v1/transactions`, `GET /api/v1/transactions/{id}`
+- `GET /api/v1/transactions/search?userId=&status=&page=&size=`
 
-**Terminal 1: Service Discovery / API Gateway**
-```bash
-cd api-gateway
-mvn spring-boot:run
-```
+**Rewards**
+- `GET /api/v1/rewards/user/{userId}`, `GET /api/v1/rewards/user/{userId}/summary`
 
-**Terminal 2: User Service**
-```bash
-cd user-service
-mvn spring-boot:run
-```
+**Notifications**
+- `GET /api/v1/notifications/user/{userId}?unreadOnly=&page=&size=`
+- `GET /api/v1/notifications/user/{userId}/unread-count`
+- `PATCH /api/v1/notifications/{id}/read`, `PATCH /api/v1/notifications/user/{userId}/read-all`
+- `DELETE /api/v1/notifications/{id}`
 
-**Terminal 3: Wallet Service**
-```bash
-cd wallet-service
-mvn spring-boot:run
-```
+Validation failures and domain errors return **RFC-7807 `application/problem+json`** with a
+`correlationId`. Interactive Swagger UI is available per service, e.g.
+http://localhost:8081/swagger-ui.html.
 
-**Terminal 4: Transaction Service**
-```bash
-cd transaction-service
-mvn spring-boot:run
-```
+## 📈 Observability
+- Health (with liveness/readiness): `GET /actuator/health` on every service.
+- Prometheus metrics: `GET /actuator/prometheus`.
+- Every log line carries `[correlationId,traceId,spanId]`; the `X-Correlation-Id` header is propagated.
 
-**Terminal 5: Notification Service**
-```bash
-cd notification-service
-mvn spring-boot:run
-```
+## ✅ Testing & CI
+- `mvn verify` runs unit tests (JUnit 5 + Mockito) and context checks against the `test` profile
+  (in-memory H2, Flyway off) — no Docker required.
+- GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds + tests the backend
+  and lints/builds the frontend on every push/PR.
 
-**Terminal 6: Reward Service**
-```bash
-cd reward-service
-mvn spring-boot:run
-```
-
-> **Note**: Wait for all services to initialize. The API Gateway running on port `8080` will automatically route traffic to the respective downstream services.
-
-### 2. Starting the Frontend
-
-Open a new terminal, navigate to the `frontend` folder, install dependencies, and start the development server.
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will be available at **[http://localhost:3000](http://localhost:3000)**.
-
----
-
-## 📖 API Documentation & Testing
-
-### Interactive Swagger UI
-Because the backend is equipped with `springdoc-openapi`, you can view the fully documented, interactive Swagger UI for any running service directly in your browser:
-- **Wallet API:** [http://localhost:8088/swagger-ui.html](http://localhost:8088/swagger-ui.html)
-- **User/Auth API:** [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
-- **Transaction API:** [http://localhost:8082/swagger-ui.html](http://localhost:8082/swagger-ui.html)
-
-### Postman Collection
-A complete Postman collection is included in the project root: `payment_wallet.postman_collection.json`.
-1. Open Postman and click **Import**.
-2. Select the `payment_wallet.postman_collection.json` file.
-3. The collection is pre-configured with a `{{jwt_token}}` variable. Simply run the **Login** request, copy the token from the response, and paste it into the Collection Variables to authenticate all subsequent requests.
-
----
-
-## 💡 Quick Start Guide (Testing the Flow)
-
-1. Navigate to **http://localhost:3000/signup** and create a new account.
-2. Log in with your new credentials.
-3. On the **Dashboard**, click **Add Funds** to instantly credit your wallet.
-4. Open an incognito window, create a *second* user account, and log in.
-5. In your first window, go to **Transactions**, click **Send Money**, and enter the second user's ID along with an amount.
-6. Check your **Rewards** tab—you may have earned some cashback!
+## 🗄️ Database
+PostgreSQL, one database per service, schema owned by **Flyway** (`src/main/resources/db/migration`)
+with `ddl-auto=validate`. Data persists across restarts in the `pgdata` Docker volume.

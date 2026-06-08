@@ -61,6 +61,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=payment
       - WALLET_SERVICE_URL=http://wallet-service:8088
       - LOGGING_FILE_NAME=/app/logs/user-service.log
+      - LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
     volumes:
       - ./logs:/app/logs
     depends_on:
@@ -86,6 +87,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/wallet-service.log
+      - LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
     volumes:
       - ./logs:/app/logs
     depends_on:
@@ -109,6 +111,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/transaction-service.log
+      - LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
       - WALLET_SERVICE_URL=http://wallet-service:8088/api/v1/wallets
     volumes:
       - ./logs:/app/logs
@@ -135,6 +138,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/notification-service.log
+      - LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
     volumes:
       - ./logs:/app/logs
     depends_on:
@@ -158,6 +162,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/reward-service.log
+      - LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
     volumes:
       - ./logs:/app/logs
     depends_on:
@@ -183,6 +188,7 @@ services:
       - REWARD_SERVICE_URL=http://reward-service:8084
       - CORS_ALLOWED_ORIGINS=http://localhost:3000
       - LOGGING_FILE_NAME=/app/logs/api-gateway.log
+      - LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs
     volumes:
       - ./logs:/app/logs
     depends_on:
