@@ -2,6 +2,7 @@ package com.payment_wallet.notification_service.kafka;
 
 import com.payment_wallet.notification_service.dto.TransactionEvent;
 import com.payment_wallet.notification_service.entity.Notification;
+import com.payment_wallet.notification_service.entity.NotificationType;
 import com.payment_wallet.notification_service.repository.NotificationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,18 +23,27 @@ public class NotificationConsumer {
     }
 
     @KafkaListener(topics = "txn-initiated", groupId = "notification-group")
-    public void consumeTransaction(TransactionEvent transaction) {
+    public void consumeTransaction(TransactionEvent txn) {
+        // Notify both parties; idempotent so Kafka redelivery never creates duplicates.
+        notifyOnce(txn.getId(), txn.getReceiverId(), NotificationType.TRANSFER_RECEIVED,
+                "You received " + txn.getAmount() + " from account #" + txn.getSenderId());
+        notifyOnce(txn.getId(), txn.getSenderId(), NotificationType.TRANSFER_SENT,
+                "You sent " + txn.getAmount() + " to account #" + txn.getReceiverId());
+    }
 
-        String notify = "$ " + transaction.getAmount() + " received from user " + transaction.getSenderId();
-
-        Notification notification = Notification.builder()
-                .userId(transaction.getReceiverId())
-                .message(notify)
+    private void notifyOnce(Long transactionId, Long userId, NotificationType type, String message) {
+        if (transactionId != null && notificationRepository.existsByTransactionIdAndUserId(transactionId, userId)) {
+            log.debug("Notification already exists for txn {} / user {}", transactionId, userId);
+            return;
+        }
+        notificationRepository.save(Notification.builder()
+                .userId(userId)
+                .type(type)
+                .message(message)
+                .transactionId(transactionId)
+                .read(false)
                 .sentAt(LocalDateTime.now())
-                .build();
-
-        notificationRepository.save(notification);
-
-        log.info("Notification saved for userId: {}, message: {}", transaction.getReceiverId(), notify);
+                .build());
+        log.info("Notification saved for userId {} (txn {}, type {})", userId, transactionId, type);
     }
 }

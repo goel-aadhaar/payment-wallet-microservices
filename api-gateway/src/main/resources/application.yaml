@@ -7,3 +7,27 @@ spring:
 
 jwt:
   secret: secret123secret123secret123secret123secret123secret123
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    redis:
+      enabled: false   # rate limiting uses in-memory Bucket4j; no Redis is deployed
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLE_PROBABILITY:1.0}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  pattern:
+    correlation: "[%X{correlationId:-},%X{traceId:-},%X{spanId:-}] "

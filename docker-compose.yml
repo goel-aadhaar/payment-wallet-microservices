@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment
+      POSTGRES_DB: payment
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U payment" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.9.6
     ports:
@@ -39,13 +56,20 @@ services:
       - "8081:8081"
     environment:
       - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/userdb
+      - SPRING_DATASOURCE_USERNAME=payment
+      - SPRING_DATASOURCE_PASSWORD=payment
       - WALLET_SERVICE_URL=http://wallet-service:8088
       - LOGGING_FILE_NAME=/app/logs/user-service.log
     volumes:
       - ./logs:/app/logs
     depends_on:
-      - kafka
-      - wallet-service
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      wallet-service:
+        condition: service_started
 
   wallet-service:
     build:
@@ -57,12 +81,18 @@ services:
       - "8088:8088"
     environment:
       - SERVER_PORT=8088
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/walletdb
+      - SPRING_DATASOURCE_USERNAME=payment
+      - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/wallet-service.log
     volumes:
       - ./logs:/app/logs
     depends_on:
-      - kafka
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   transaction-service:
     build:
@@ -74,14 +104,21 @@ services:
       - "8082:8082"
     environment:
       - SERVER_PORT=8082
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/transactiondb
+      - SPRING_DATASOURCE_USERNAME=payment
+      - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/transaction-service.log
       - WALLET_SERVICE_URL=http://wallet-service:8088/api/v1/wallets
     volumes:
       - ./logs:/app/logs
     depends_on:
-      - kafka
-      - wallet-service
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      wallet-service:
+        condition: service_started
 
   notification-service:
     build:
@@ -93,12 +130,18 @@ services:
       - "8083:8083"
     environment:
       - SERVER_PORT=8083
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/notificationdb
+      - SPRING_DATASOURCE_USERNAME=payment
+      - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/notification-service.log
     volumes:
       - ./logs:/app/logs
     depends_on:
-      - kafka
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   reward-service:
     build:
@@ -110,12 +153,18 @@ services:
       - "8084:8084"
     environment:
       - SERVER_PORT=8084
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/rewarddb
+      - SPRING_DATASOURCE_USERNAME=payment
+      - SPRING_DATASOURCE_PASSWORD=payment
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - LOGGING_FILE_NAME=/app/logs/reward-service.log
     volumes:
       - ./logs:/app/logs
     depends_on:
-      - kafka
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
 
   api-gateway:
     build:
@@ -132,6 +181,7 @@ services:
       - TRANSACTION_SERVICE_URL=http://transaction-service:8082
       - NOTIFICATION_SERVICE_URL=http://notification-service:8083
       - REWARD_SERVICE_URL=http://reward-service:8084
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000
       - LOGGING_FILE_NAME=/app/logs/api-gateway.log
     volumes:
       - ./logs:/app/logs
@@ -150,3 +200,6 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
     depends_on:
       - api-gateway
+
+volumes:
+  pgdata:

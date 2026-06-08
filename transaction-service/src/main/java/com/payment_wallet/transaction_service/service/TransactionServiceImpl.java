@@ -5,8 +5,11 @@ import com.payment_wallet.transaction_service.dto.*;
 import com.payment_wallet.transaction_service.entity.Transaction;
 import com.payment_wallet.transaction_service.kafka.KafkaEventProducer;
 import com.payment_wallet.transaction_service.repository.TransactionRepository;
+import com.payment_wallet.common.error.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -177,7 +180,7 @@ public class TransactionServiceImpl implements TransactionService {
     private void tryReleaseHold(String holdReference) {
         if (holdReference == null) return;
         try {
-            walletClient.release(holdReference);
+            walletClient.release(CaptureRequest.builder().holdReference(holdReference).build());
             log.info("Hold released successfully for holdReference: {}", holdReference);
         } catch (Exception e) {
             log.error("Failed to release hold for holdReference: {}. Manual intervention may be required.", holdReference, e);
@@ -187,5 +190,16 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
+    }
+
+    @Override
+    public Transaction getById(Long id) {
+        return transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found: " + id));
+    }
+
+    @Override
+    public Page<Transaction> search(Long userId, String status, Pageable pageable) {
+        return transactionRepository.search(userId, status, pageable);
     }
 }

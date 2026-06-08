@@ -1,8 +1,9 @@
 package com.payment_wallet.api_gateway.controller;
 
-import com.payment_wallet.api_gateway.util.JwtUtil;
+import com.payment_wallet.common.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,7 +13,8 @@ import java.util.Set;
 @RestController
 public class ProxyController {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    // JDK HttpClient-based factory: unlike the default, it supports PATCH.
+    private final RestTemplate restTemplate = new RestTemplate(new JdkClientHttpRequestFactory());
     private final JwtUtil jwtUtil;
 
     @Value("${USER_SERVICE_URL:http://user-service:8081}")
@@ -34,27 +36,27 @@ public class ProxyController {
         this.jwtUtil = jwtUtil;
     }
 
-    @RequestMapping(value = {"/auth/**", "/api/v1/users/**"}, method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+    @RequestMapping(value = {"/auth/**", "/api/v1/users/**"}, method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<?> proxyToUserService(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
         return forward(userServiceUrl, request, body);
     }
 
-    @RequestMapping(value = "/api/v1/wallets/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+    @RequestMapping(value = "/api/v1/wallets/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<?> proxyToWalletService(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
         return forward(walletServiceUrl, request, body);
     }
 
-    @RequestMapping(value = "/api/v1/transactions/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+    @RequestMapping(value = "/api/v1/transactions/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<?> proxyToTransactionService(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
         return forward(transactionServiceUrl, request, body);
     }
 
-    @RequestMapping(value = "/api/v1/rewards/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+    @RequestMapping(value = "/api/v1/rewards/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<?> proxyToRewardService(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
         return forward(rewardServiceUrl, request, body);
     }
 
-    @RequestMapping(value = "/api/v1/notifications/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+    @RequestMapping(value = "/api/v1/notifications/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<?> proxyToNotificationService(HttpServletRequest request, @RequestBody(required = false) byte[] body) {
         return forward(notificationServiceUrl, request, body);
     }
@@ -92,11 +94,33 @@ public class ProxyController {
         HttpEntity<byte[]> entity = new HttpEntity<>(body, headers);
 
         try {
-            return restTemplate.exchange(url, HttpMethod.valueOf(request.getMethod()), entity, byte[].class);
+            ResponseEntity<byte[]> resp = restTemplate.exchange(
+                    url, HttpMethod.valueOf(request.getMethod()), entity, byte[].class);
+            return relayResponse(resp.getStatusCode(), resp.getHeaders(), resp.getBody());
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode()).headers(e.getResponseHeaders()).body(e.getResponseBodyAsByteArray());
+            return relayResponse(e.getStatusCode(), e.getResponseHeaders(), e.getResponseBodyAsByteArray());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(("Downstream service unavailable: " + e.getMessage()).getBytes());
         }
+    }
+
+    /**
+     * Relays a downstream response, stripping hop-by-hop/framing headers. Copying the downstream
+     * Content-Length / Transfer-Encoding verbatim corrupts the re-sent response (e.g. a chunked
+     * error body arrives with a conflicting framing and the client never receives it), so we let
+     * the gateway's own container reframe the body.
+     */
+    private ResponseEntity<byte[]> relayResponse(HttpStatusCode status, HttpHeaders downstream, byte[] body) {
+        Set<String> skip = Set.of("transfer-encoding", "content-length", "connection");
+        HttpHeaders clean = new HttpHeaders();
+        if (downstream != null) {
+            downstream.forEach((name, values) -> {
+                if (!skip.contains(name.toLowerCase())) {
+                    clean.addAll(name, values);
+                }
+            });
+        }
+        return ResponseEntity.status(status).headers(clean).body(body);
     }
 }

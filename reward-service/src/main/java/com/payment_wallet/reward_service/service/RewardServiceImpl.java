@@ -1,5 +1,6 @@
 package com.payment_wallet.reward_service.service;
 
+import com.payment_wallet.reward_service.dto.RewardSummary;
 import com.payment_wallet.reward_service.entity.Reward;
 import com.payment_wallet.reward_service.repository.RewardRepository;
 import org.springframework.stereotype.Service;
@@ -30,5 +31,12 @@ public class RewardServiceImpl implements RewardService {
     @Override
     public List<Reward> getAllRewards() {
         return rewardRepository.findAll();
+    }
+
+    @Override
+    public RewardSummary getSummary(Long userId) {
+        double total = rewardRepository.sumPointsByUserId(userId);
+        long count = rewardRepository.countByUserId(userId);
+        return new RewardSummary(userId, total, count, RewardSummary.tierFor(total));
     }
 }

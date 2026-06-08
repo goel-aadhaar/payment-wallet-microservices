@@ -1,12 +1,13 @@
 package com.payment_wallet.user_service.controller;
 
+import com.payment_wallet.user_service.dto.ChangePasswordRequest;
 import com.payment_wallet.user_service.dto.JwtResponse;
 import com.payment_wallet.user_service.dto.LoginRequest;
 import com.payment_wallet.user_service.dto.SignupRequest;
 import com.payment_wallet.user_service.entity.User;
 import com.payment_wallet.user_service.repository.UserRepository;
 import com.payment_wallet.user_service.service.UserService;
-import com.payment_wallet.user_service.util.JwtUtil;
+import com.payment_wallet.common.security.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class AuthController {
 
     @Operation(summary = "Sign Up", description = "Create a new user account")
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
 
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
@@ -83,5 +85,21 @@ public class AuthController {
         String token = jwtUtil.generateToken(claims, user.getEmail());
 
         return ResponseEntity.ok(new JwtResponse(token));
+    }
+
+    @Operation(summary = "Change Password", description = "Change the password for an existing account")
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+        User user = userOpt.get();
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid current password");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        return ResponseEntity.ok("Password updated successfully");
     }
 }

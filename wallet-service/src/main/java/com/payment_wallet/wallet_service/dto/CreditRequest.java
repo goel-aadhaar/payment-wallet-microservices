@@ -1,11 +1,16 @@
 package com.payment_wallet.wallet_service.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public class CreditRequest {
     @Schema(description = "ID of the user whose wallet to credit", example = "1")
+    @NotNull(message = "userId is required")
     private Long userId;
     @Schema(description = "Amount to credit", example = "1000")
+    @NotNull(message = "amount is required")
+    @Positive(message = "amount must be positive")
     private Long amount;
     @Schema(description = "Currency of the amount", example = "INR")
     private String currency;

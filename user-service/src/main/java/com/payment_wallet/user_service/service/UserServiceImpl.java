@@ -1,7 +1,9 @@
 package com.payment_wallet.user_service.service;
 
+import com.payment_wallet.common.error.ResourceNotFoundException;
 import com.payment_wallet.user_service.client.WalletClient;
 import com.payment_wallet.user_service.dto.CreateWalletRequest;
+import com.payment_wallet.user_service.dto.UpdateProfileRequest;
 import com.payment_wallet.user_service.entity.User;
 import com.payment_wallet.user_service.repository.UserRepository;
 import org.slf4j.Logger;
@@ -53,5 +55,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public User updateProfile(Long id, UpdateProfileRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        return userRepository.save(user);
     }
 }

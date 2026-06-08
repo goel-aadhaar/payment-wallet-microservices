@@ -11,29 +11,11 @@
 	<name>api-gateway</name>
 	<description>API Gateway for Payment Wallet</description>
 
-	<properties>
-		<spring-cloud.version>2025.1.1</spring-cloud.version>
-	</properties>
-
 	<dependencies>
-		<!-- JWT -->
+		<!-- Shared cross-cutting library (JWT util, error handling, correlation IDs) -->
 		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-api</artifactId>
-			<version>0.13.0</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-jackson</artifactId>
-			<version>0.13.0</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt-impl</artifactId>
-			<version>0.13.0</version>
-			<scope>runtime</scope>
+			<groupId>com.payment_wallet</groupId>
+			<artifactId>common</artifactId>
 		</dependency>
 
 		<!-- Redis for rate limiting -->
@@ -70,7 +52,6 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>3.0.3</version>
 		</dependency>
 
 		<!-- Test -->
@@ -86,18 +67,6 @@
 		</dependency>
 	</dependencies>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -108,4 +77,3 @@
 	</build>
 
 </project>
-

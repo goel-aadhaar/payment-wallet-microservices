@@ -33,4 +33,10 @@ public class RewardController {
     public ResponseEntity<List<Reward>> getRewardsByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(rewardService.getRewardByUserId(userId));
     }
+
+    @Operation(summary = "Reward summary", description = "Total points, reward count, and loyalty tier for a user")
+    @GetMapping("/user/{userId}/summary")
+    public ResponseEntity<com.payment_wallet.reward_service.dto.RewardSummary> getSummary(@PathVariable Long userId) {
+        return ResponseEntity.ok(rewardService.getSummary(userId));
+    }
 }

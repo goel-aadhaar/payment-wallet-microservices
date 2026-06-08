@@ -11,6 +11,8 @@ import com.payment_wallet.wallet_service.repository.WalletHoldRepository;
 import com.payment_wallet.wallet_service.repository.WalletRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,13 @@ public class WalletService {
         Wallet saved = walletRepository.save(wallet);
         log.info("Wallet created for userId: {}", saved.getUserId());
         return toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WalletTransaction> getStatement(Long userId, Pageable pageable) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("Wallet not found for user: " + userId));
+        return transactionRepository.findByWalletIdOrderByTimestampDesc(wallet.getId(), pageable);
     }
 
     @Transactional

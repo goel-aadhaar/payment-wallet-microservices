@@ -1,5 +1,6 @@
 package com.payment_wallet.user_service.util;
 
+import com.payment_wallet.common.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

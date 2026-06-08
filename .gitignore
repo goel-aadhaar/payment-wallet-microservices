@@ -29,6 +29,9 @@ node_modules/
 out/
 build/
 
+# --- Local runner state ---
+.run-local.json
+
 # --- Env files ---
 .env
 .env.local

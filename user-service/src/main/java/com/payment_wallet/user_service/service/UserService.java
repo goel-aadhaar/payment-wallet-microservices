@@ -1,5 +1,6 @@
 package com.payment_wallet.user_service.service;
 
+import com.payment_wallet.user_service.dto.UpdateProfileRequest;
 import com.payment_wallet.user_service.entity.User;
 
 import java.util.List;
@@ -12,5 +13,7 @@ public interface UserService {
     Optional<User> getUserById(Long id);
 
     List<User> getAllUsers();
+
+    User updateProfile(Long id, UpdateProfileRequest request);
 }
 

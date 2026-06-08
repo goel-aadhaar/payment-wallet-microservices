@@ -1,19 +1,28 @@
 package com.payment_wallet.user_service.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class SignupRequest {
 
     @Schema(description = "User's first name", example = "John")
+    @NotBlank(message = "First name is required")
     private String firstName;
 
     @Schema(description = "User's last name", example = "Doe")
+    @NotBlank(message = "Last name is required")
     private String lastName;
 
     @Schema(description = "User's email address (must be unique)", example = "john.doe@example.com")
+    @NotBlank(message = "Email is required")
+    @Email(message = "A valid email address is required")
     private String email;
 
     @Schema(description = "User's password", example = "securepassword123")
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
     public SignupRequest() {}
 

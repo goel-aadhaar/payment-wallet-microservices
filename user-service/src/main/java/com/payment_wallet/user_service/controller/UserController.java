@@ -1,7 +1,9 @@
 package com.payment_wallet.user_service.controller;
 
+import com.payment_wallet.user_service.dto.UpdateProfileRequest;
 import com.payment_wallet.user_service.entity.User;
 import com.payment_wallet.user_service.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,5 +42,11 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @Operation(summary = "Update profile", description = "Update a user's first and last name")
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateProfile(@PathVariable Long id, @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(id, request));
     }
 }

@@ -1,7 +1,11 @@
 package com.payment_wallet.wallet_service.controller;
 
+import com.payment_wallet.common.web.PageResponse;
 import com.payment_wallet.wallet_service.dto.*;
+import com.payment_wallet.wallet_service.entity.WalletTransaction;
 import com.payment_wallet.wallet_service.service.WalletService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +27,18 @@ public class WalletController {
         return ResponseEntity.status(HttpStatus.CREATED).body(walletService.createWallet(request));
     }
 
+    @Operation(summary = "Wallet statement", description = "Paginated ledger entries (credit/debit/hold/capture) for a user, newest first")
+    @GetMapping("/user/{userId}/transactions")
+    public PageResponse<WalletTransaction> statement(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.from(walletService.getStatement(userId, PageRequest.of(page, size)));
+    }
+
     @Operation(summary = "Credit Wallet", description = "Add funds to a user's wallet")
     @PostMapping("/credit")
-    public ResponseEntity<WalletResponse> credit(@RequestBody CreditRequest request) {
+    public ResponseEntity<WalletResponse> credit(@Valid @RequestBody CreditRequest request) {
         return ResponseEntity.ok(walletService.credit(request));
     }
 

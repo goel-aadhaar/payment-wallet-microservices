@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "wallet-service", url = "${wallet.service.url}")
+// Paths here must mirror wallet-service WalletController (base /api/v1/wallets).
+@FeignClient(name = "wallet-service", url = "${wallet.service.url}",
+        fallbackFactory = WalletClientFallbackFactory.class)
 public interface WalletClient {
 
     @PostMapping("/debit")
@@ -19,12 +21,12 @@ public interface WalletClient {
     @PostMapping("/hold")
     HoldResponse placeHold(@RequestBody HoldRequest request);
 
-    @PostMapping("/capture")
+    @PostMapping("/hold/capture")
     WalletResponse capture(@RequestBody CaptureRequest request);
 
-    @PostMapping("/release/{holdReference}")
-    HoldResponse release(@PathVariable String holdReference);
+    @PostMapping("/hold/release")
+    HoldResponse release(@RequestBody CaptureRequest request);
 
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     WalletResponse getWallet(@PathVariable Long userId);
 }
